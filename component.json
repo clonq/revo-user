@@ -1,0 +1,8 @@
+{
+	"description": "simple user component",
+	"author": "Ovi Comes",
+	"version": "0.1.0",
+	"dependencies": {
+		"underscore": "*"
+	}
+}
