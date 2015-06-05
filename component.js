@@ -3,8 +3,14 @@ module.exports = function(){
     this.init = function(config) {
         var that = this;
         this.params = _.defaults(config||{}, defaults)
-        process.on('user:register', function(payload){
-        	console.log('clonq/revo-user: user:register: ', payload)
+        process.on('user:register', function(pin){
+        	console.log('clonq/revo-user: user:register: ', pin)
+        	var pout = {
+        		success: {
+        			message: "user has been registered successfuly"
+        		}
+        	}
+        	process.emit('user:register.response', pout);
         })
     }
 }
