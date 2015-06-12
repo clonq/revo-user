@@ -17,18 +17,20 @@ module.exports = function(){
                 impl.user.create(pin)
                 .then(function(user){
                     pout = {
+                        user: user,
                         success: {
                             message: "user has been registered successfully"
                         }
                     }
+                    process.emit('user:register.response', pout);
                 })
                 .catch(function(err){
                     done(err);
                 })
             } else {
                 pout.error = { message: errors[0].message };
+                process.emit('user:register.response', pout);
             }
-            process.emit('user:register.response', pout);
         })
     }
 
