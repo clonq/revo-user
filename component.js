@@ -69,7 +69,6 @@ console.log('user:find', criteria);
 }
 
 var defaults = module.exports.defaults = {
-    listen: 'user:register',
     models: {
         user: {
             supportedMethods: ['register', 'find']
