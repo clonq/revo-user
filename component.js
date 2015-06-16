@@ -8,6 +8,22 @@ module.exports = function(){
         var self = this;
         var daoImpl = dao.use(dao.MEMORY);
         this.params = _.defaults(config||{}, defaults)
+        //todo: don't use setTimeout
+        setTimeout(function(){
+            process.emit('http.route:create', {path:'/activate/:activationKey', event:'user:activate'});
+        }, 100)
+        process.on('user:activate', function(pin){
+console.log('user:activate', pin);
+            // var errors = validate(pin);
+            // if(errors.length == 0) {
+            //     dao.register('user');
+            //     daoImpl.user.update(pin)
+            //     .then(function(user){
+            //     });
+            //     .catch(function(err){
+            //     });
+            // }
+        });
         process.on('user:update', function(user){
 console.log('user:update', user);
         });
@@ -69,6 +85,7 @@ console.log('user:find', criteria);
 }
 
 var defaults = module.exports.defaults = {
+    listen: 'user:register',
     models: {
         user: {
             supportedMethods: ['register', 'find']
