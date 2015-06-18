@@ -6,43 +6,51 @@ module.exports = function(){
 
     this.init = function(config) {
         var self = this;
-        var daoImpl = dao.use(dao.MEMORY);
+        var daoImpl = dao.use(dao.FILE);
+        dao.register('user');
         this.params = _.defaults(config||{}, defaults)
         //todo: don't use setTimeout
         setTimeout(function(){
             process.emit('http.route:create', {path:'/activate/:activationKey', event:'user:activate'});
-        }, 100)
+        }, 500)
         process.on('user:activate', function(pin){
 console.log('user:activate', pin);
-            // var errors = validate(pin);
-            // if(errors.length == 0) {
-            //     dao.register('user');
-            //     daoImpl.user.update(pin)
-            //     .then(function(user){
-            //     });
-            //     .catch(function(err){
-            //     });
-            // }
+            impl.user.find({activationKey: pin.activationKey})
+            .then(function(user){
+console.log(user)
+            })
+            .catch(function(err){
+console.log(err)
+            });
         });
         process.on('user:update', function(user){
 console.log('user:update', user);
         });
-        process.on('user:find', function(criteria){
+        process.on('user:findOne', function(criteria){
 console.log('user:find', criteria);
-            // fake search result
-            process.emit('user:find.by.email.'+criteria.email+'.response', {fake: 'user'});//todo
-            // daoImpl.user.find(pin)
-            // .then(function(user){
-            // })
-            // .catch(function(err){
-            // })
+            var searchKey = 'unknown';
+            var searchValue = 'unknown';
+            if(criteria instanceof Object) {
+                searchKey = Object.keys(criteria);
+                searchValue = criteria[searchKey];
+            } else {
+                console.log('TODO: "user:find" search by multiple criteria');
+            }
+            var eventOut = 'user:find.by.'+searchKey+'.'+searchValue+'.response';
+            daoImpl.user.findOne(criteria)
+            .then(function(user){
+                process.emit(eventOut, user);
+            })
+            .catch(function(err){
+                process.emit('user:find.error', err);
+            })
         });
         process.on('user:register', function(pin){
             console.log('clonq/revo-user: user:register: ', pin);
             var pout = {};
             var errors = validate(pin);
             if(errors.length == 0) {
-                dao.register('user');
+                // dao.register('user');
                 daoImpl.user.create(pin)
                 .then(function(user){
                     if(!!user.inviteCode) {
