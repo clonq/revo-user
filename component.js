@@ -50,23 +50,35 @@ console.log('user:find', criteria);
             var pout = {};
             var errors = validate(pin);
             if(errors.length == 0) {
-                // dao.register('user');
-                daoImpl.user.create(pin)
+                daoImpl
+                .user
+                .create(pin)
                 .then(function(user){
+                    // set activation key and trigger send confirm email 
+                    user.activationKey = user.$id.replace(/\-/g, '');
+                    daoImpl
+                    .user
+                    .update(pin)
+                    .then(function(user){
+                        process.emit('email:send', {
+                            template: 'confirmEmail',
+                            data: {
+                                to: user.email,
+                                activationKey: user.activationKey
+                            }
+                        });
+                    })
+                    .catch(function(err){
+                        pout.error = { message: err.message };
+                        process.emit('user:register.response', pout);
+                    })
+                    // handle optional invite code
                     if(!!user.inviteCode) {
-                        var invitationPayload = {
+                        process.emit('invitation:process', {
                             code: user.inviteCode,
                             email: user.email
-                        };
-                        process.emit('invitation:process', invitationPayload);
+                        });
                     }
-                    // pout = {
-                    //     user: user,
-                    //     success: {
-                    //         message: "user has been registered successfully"
-                    //     }
-                    // }
-                    // process.emit('user:register.response', pout);
                 })
                 .catch(function(err){
                     pout.error = { message: err.message };
@@ -93,7 +105,6 @@ console.log('user:find', criteria);
 }
 
 var defaults = module.exports.defaults = {
-    listen: 'user:register',
     models: {
         user: {
             supportedMethods: ['register', 'find']
