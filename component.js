@@ -60,7 +60,7 @@ console.log('user:find', criteria);
                     .user
                     .update(pin)
                     .then(function(user){
-                        process.emit('email:send', {
+                        process.emit('notification:email', {
                             template: 'confirmEmail',
                             data: {
                                 to: user.email,
