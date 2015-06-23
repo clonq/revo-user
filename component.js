@@ -11,23 +11,57 @@ module.exports = function(){
         this.params = _.defaults(config||{}, defaults)
         //todo: don't use setTimeout
         setTimeout(function(){
-            process.emit('http.route:create', {path:'/activate/:activationKey', event:'user:activate'});
+            process.emit('http.route:create', { path:'/activate/:activationKey', trigger:'user:activate', webpage:'/'});
         }, 500)
-        process.on('user:activate', function(pin){
-console.log('user:activate', pin);
-            impl.user.find({activationKey: pin.activationKey})
+        process.on('user:login', function(pin){
+            var pout = {};
+            daoImpl
+            .user
+            .findOne({email: pin.email})
             .then(function(user){
-console.log(user)
+                if(user) {
+                    console.log(user)
+                    //todo: do proper password checking
+                    if(user.password === pin.password) {
+                        delete user.password;
+                        delete user.activationKey;
+                        delete user.inviteCode;
+                        pout.user = user;
+                    } else {
+                        pout.error = { message: 'Invalid credentials' };
+                    }
+                } else {
+                    pout.error = { message: 'No such user' };
+                }
+                process.emit('user:login.response', pout);
             })
             .catch(function(err){
-console.log(err)
+                pout.error = { message: err.message };
+                process.emit('user:login.response', pout);
+            })
+        });
+        process.on('user:activate', function(pin){
+            var pout = {};
+            daoImpl.user.findOne({activationKey: pin.activationKey})
+            .then(function(user){
+                user.status = 'active';
+                daoImpl.user.update(user)
+                .then(function(){
+                    process.emit('web:flow', { action: 'user:activated'} );
+                })
+                .catch(function(err){
+                    pout.error = { message: err.message };
+                    process.emit('user:activate.response', pout);
+                });
+            })
+            .catch(function(err){
+                pout.error = { message: err.message };
+                process.emit('user:activate.response', pout);
             });
         });
-        process.on('user:update', function(user){
-console.log('user:update', user);
-        });
+        // process.on('user:update', function(user){
+        // });
         process.on('user:findOne', function(criteria){
-console.log('user:find', criteria);
             var searchKey = 'unknown';
             var searchValue = 'unknown';
             if(criteria instanceof Object) {
@@ -54,6 +88,7 @@ console.log('user:find', criteria);
                 .user
                 .create(pin)
                 .then(function(user){
+                    user.status = 'pending activation';
                     // set activation key and trigger send confirm email 
                     user.activationKey = user.$id.replace(/\-/g, '');
                     daoImpl
@@ -67,6 +102,8 @@ console.log('user:find', criteria);
                                 activationKey: user.activationKey
                             }
                         });
+                        //todo listen to email response event
+                        process.emit('web:flow', { action: 'user:confirm' });
                     })
                     .catch(function(err){
                         pout.error = { message: err.message };
@@ -107,7 +144,7 @@ console.log('user:find', criteria);
 var defaults = module.exports.defaults = {
     models: {
         user: {
-            supportedMethods: ['register', 'find']
+            supportedMethods: ['activate', 'find', 'findOne', 'register']
         }
     }
 }
