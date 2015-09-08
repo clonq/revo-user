@@ -1,11 +1,11 @@
 {
 	"description": "simple user component",
 	"author": "Ovi Comes",
-	"version": "0.1.5",
+	"version": "0.1.7",
 	"dependencies": {
 		"underscore": "*",
 		"jsonschema": "*",
-		"bonsens-models": "0.2.5",
+		"bonsens-models": "*",
 		"daoi": "*"
 	}
 }

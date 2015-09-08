@@ -9,10 +9,7 @@ module.exports = function(){
         var daoImpl = dao.use(dao.FILE);
         dao.register('user');
         this.params = _.defaults(config||{}, defaults)
-        //todo: don't use setTimeout
-        setTimeout(function(){
-            process.emit('http.route:create', { path:'/activate/:activationKey', trigger:'user:activate', webpage:'/'});
-        }, 500)
+        process.emit('http.route:create', { path:'/activate/:activationKey', trigger:'user:activate', webpage:'/'});
         process.on('user:login', function(pin){
             var pout = {};
             daoImpl
